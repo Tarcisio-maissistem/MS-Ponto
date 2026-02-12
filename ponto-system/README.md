@@ -61,10 +61,18 @@ Depois acesse o endereco que aparecer no terminal (na rede local, use o IP do PC
 - Copie o conteudo de `ponto-system/dist/` para um servidor (IIS/Apache/Nginx).
 - Abra a URL do servidor no navegador do cliente.
 
+## Instalar como servico do Windows (iniciar automaticamente)
+
+Execute como **Administrador**:
+
+- `instalar_servico.bat`: cria o servico `MSPontoV1`, configura inicio automatico e cria um atalho na Area de Trabalho.
+- `desinstalar_servico.bat`: remove o servico e o atalho.
+
+Depois de instalar, acesse: `http://127.0.0.1:4173`
+
 ## Backup e migracao de dados
 
 Na aba **Configuracoes**, use:
 
 - Exportar Tudo (.json): backup completo (funcionarios, registros e configuracoes)
 - Importar Configuracao: restaurar/migrar para outro computador
-
