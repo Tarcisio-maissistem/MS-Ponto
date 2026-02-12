@@ -8,7 +8,17 @@ set "PORT=4173"
 set "APP_URL=http://%HOST%:%PORT%/"
 set "SHORTCUT_NAME=MS Ponto V1.0"
 
-call :EnsureAdmin %*
+REM Auto-elevate via UAC (service install/remove requires admin).
+net session >nul 2>&1
+if not "%errorlevel%"=="0" (
+  echo.
+  echo Solicitando permissao de Administrador...
+  set "ELEV_ARG="
+  if /i "%~1"=="--install" set "ELEV_ARG=--install"
+  if /i "%~1"=="--uninstall" set "ELEV_ARG=--uninstall"
+  powershell -NoProfile -Command "Start-Process -FilePath '%~f0' -ArgumentList '%ELEV_ARG%' -Verb RunAs" >nul 2>&1
+  exit /b 0
+)
 
 set "APP_DIR=%~dp0"
 if "%APP_DIR:~-1%"=="\" set "APP_DIR=%APP_DIR:~0,-1%"
@@ -74,15 +84,6 @@ echo.
 pause
 goto :End
 
-:EnsureAdmin
-net session >nul 2>&1
-if "%errorlevel%"=="0" goto :eof
-
-echo.
-echo Solicitando permissao de Administrador...
-powershell -NoProfile -Command "Start-Process -FilePath '%~f0' -ArgumentList '%*' -Verb RunAs" >nul 2>&1
-exit /b 0
-
 :FindNode
 set "NODE_EXE="
 for /f "delims=" %%I in ('where node 2^>nul') do (
@@ -135,10 +136,12 @@ if "%errorlevel%"=="0" (
 ) else (
   echo.
   echo Criando servico "%SERVICE_NAME%"...
-  sc create "%SERVICE_NAME%" binPath= "\"%NODE_EXE%\" \"%APP_DIR%\\service\\serve-dist.mjs\" --host %HOST% --port %PORT%" start= auto DisplayName= "%DISPLAY_NAME%"
+  sc create "%SERVICE_NAME%" binPath= "\"%NODE_EXE%\" \"%APP_DIR%\service\serve-dist.mjs\" --host %HOST% --port %PORT%" start= auto DisplayName= "%DISPLAY_NAME%"
+  set "SC_RC=%errorlevel%"
+  sc query "%SERVICE_NAME%" >nul 2>&1
   if not "%errorlevel%"=="0" (
     echo.
-    echo ERRO: falha ao criar o servico.
+    echo ERRO: falha ao criar o servico (sc rc=%SC_RC%).
     echo.
     pause
     exit /b 1
