@@ -65,6 +65,7 @@ Depois acesse o endereco que aparecer no terminal (na rede local, use o IP do PC
 
 Execute como **Administrador**:
 
+- `MSPontoServico.bat`: menu com instalar/desinstalar (recomendado).
 - `instalar_servico.bat`: cria o servico `MSPontoV1`, configura inicio automatico e cria um atalho na Area de Trabalho.
 - `desinstalar_servico.bat`: remove o servico e o atalho.
 

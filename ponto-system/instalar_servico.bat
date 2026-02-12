@@ -5,6 +5,8 @@ set "SERVICE_NAME=MSPontoV1"
 set "DISPLAY_NAME=MS Ponto V1.0"
 set "HOST=127.0.0.1"
 set "PORT=4173"
+set "APP_URL=http://%HOST%:%PORT%/"
+set "SHORTCUT_NAME=MS Ponto V1.0"
 
 REM Ensure we're running as admin.
 net session >nul 2>&1
@@ -88,23 +90,38 @@ echo.
 echo Iniciando servico...
 sc start "%SERVICE_NAME%" >nul 2>&1
 
-REM Create desktop shortcut (URL shortcut).
-set "DESKTOP=%USERPROFILE%\Desktop"
-if exist "%DESKTOP%\" (
-  > "%DESKTOP%\MS Ponto V1.0.url" (
-    echo [InternetShortcut]
-    echo URL=http://%HOST%:%PORT%/
-    echo IconFile=%APP_DIR%\public\vite.svg
-    echo IconIndex=0
-  )
-  echo.
-  echo Atalho criado em: "%DESKTOP%\MS Ponto V1.0.url"
-)
+REM Create desktop shortcuts for current user and Public desktop.
+call :CreateShortcuts "%USERPROFILE%\Desktop"
+if exist "%PUBLIC%\Desktop\" call :CreateShortcuts "%PUBLIC%\Desktop"
 
 echo.
 echo OK. O MS Ponto V1.0 foi instalado como servico e configurado para iniciar automaticamente.
-echo Acesse: http://%HOST%:%PORT%/
+echo Acesse: %APP_URL%
 echo.
 pause
 exit /b 0
 
+:CreateShortcuts
+set "TARGET_DESKTOP=%~1"
+if not exist "%TARGET_DESKTOP%\" goto :eof
+
+REM .url shortcut (simple and reliable for URLs)
+> "%TARGET_DESKTOP%\%SHORTCUT_NAME%.url" (
+  echo [InternetShortcut]
+  echo URL=%APP_URL%
+)
+
+REM .lnk shortcut (optional, more "Windows-like")
+powershell -NoProfile -Command ^
+  "$d='%TARGET_DESKTOP%';$n='%SHORTCUT_NAME%';$u='%APP_URL%';" ^
+  "$p=Join-Path $d ($n + '.lnk');" ^
+  "$w=New-Object -ComObject WScript.Shell;" ^
+  "$s=$w.CreateShortcut($p);" ^
+  "$s.TargetPath='cmd.exe';" ^
+  "$s.Arguments='/c start \"\" \"' + $u + '\"';" ^
+  "$s.WindowStyle=7;" ^
+  "$s.Save();" >nul 2>&1
+
+echo.
+echo Atalho criado em: "%TARGET_DESKTOP%\%SHORTCUT_NAME%.url"
+goto :eof
